@@ -1,0 +1,59 @@
+# Docker Compose version specification
+version: '3.8'
+
+services:
+  # API Gateway Service
+  # Main application service that handles routing and API management
+  api-gateway:
+    build:
+      # Build context is set to parent directory to access all necessary files
+      context: ..
+      # Use the main Dockerfile for building the API Gateway service
+      dockerfile: docker/Dockerfile
+    # Ensures API Gateway starts after Nginx is ready
+    depends_on:
+      - nginx-gateway
+    # Connect to the custom bridge network for service communication
+    networks:
+      - api-network
+
+  # Nginx Gateway Service
+  # Reverse proxy service that handles SSL termination and load balancing
+  nginx-gateway:
+    build:
+      # Build context is set to parent directory to access configuration files
+      context: ..
+      # Use the Nginx-specific Dockerfile for building the reverse proxy
+      dockerfile: docker/Dockerfile.nginx
+    # Port mappings for HTTP and HTTPS traffic
+    ports:
+      - "80:80"      # HTTP port
+      - "443:443"    # HTTPS port
+    # Volume mappings for configuration and logging
+    volumes:
+      # Mount Nginx configuration files as read-only
+      - ../config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../config/nginx/conf.d:/etc/nginx/conf.d:ro
+      # Mount SSL certificates as read-only
+      - ../config/ssl:/etc/nginx/ssl:ro
+      # Mount logs directory for persistent logging
+      - ../logs/nginx:/var/log/nginx
+    # Environment variables for Nginx configuration
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    # Connect to the custom bridge network
+    networks:
+      - api-network
+    # Health check configuration to ensure Nginx is running properly
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]  # Test Nginx configuration
+      interval: 30s                   # Check every 30 seconds
+      timeout: 10s                    # Timeout after 10 seconds
+      retries: 3                      # Retry 3 times before marking unhealthy
+
+# Network Configuration
+# Define a custom bridge network for internal service communication
+networks:
+  api-network:
+    driver: bridge                    # Use bridge driver for local development

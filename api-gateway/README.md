@@ -93,6 +93,8 @@ api-gateway/
 └── tests/                # Test suites
     ├── integration/
     └── unit/
+```
+
 
 ## Setup Instructions
 
@@ -109,7 +111,6 @@ api-gateway/
 ```bash
 git clone https://github.com/your-org/api-gateway.git
 cd api-gateway
-```
 
 2. Set up environment variables:
 ```bash
